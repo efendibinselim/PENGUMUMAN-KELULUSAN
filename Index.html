@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cek Kelulusan SMP Negeri 3 Pekanbaru</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      color: #1e3a8a;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 250px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 30px;
+      font-size: 18px;
+    }
+    .lulus {
+      color: green;
+      font-weight: bold;
+      animation: blink 1s infinite;
+    }
+    .tidaklulus {
+      color: red;
+      font-weight: bold;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1 }
+      50% { opacity: 0 }
+    }
+  </style>
+</head>
+<body>
+  <h1>Pengumuman Kelulusan<br>SMP Negeri 3 Pekanbaru<br>TP. 2024/2025</h1>
+  <p>Masukkan NISN untuk mengecek status kelulusan:</p>
+  <input type="text" id="nisnInput" placeholder="Masukkan NISN">
+  <button onclick="cekKelulusan()">Cek</button>
+
+  <div class="result" id="hasil"></div>
+
+  <script>
+    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTmYmAHiziiHN0dommjcgXUQ1WUIMTIlAxRB_EViZAjUwHIaZxXRV8zWvn7dEnD3FjbLDzN95SPoeOB/pub?output=csv";
+
+    let dataSiswa = [];
+
+    // Ambil data dari Google Sheet
+    fetch(sheetURL)
+      .then(res => res.text())
+      .then(csv => {
+        const rows = csv.split('\n').slice(1); // skip header
+        dataSiswa = rows.map(row => {
+          const cols = row.split(',');
+          return {
+            nisn: cols[1]?.trim(),
+            nama: cols[2],
+            tempat: cols[3],
+            tanggal: cols[4],
+            status: cols[5]?.trim()
+          };
+        });
+      });
+
+    function cekKelulusan() {
+      const input = document.getElementById("nisnInput").value.trim();
+      const hasil = document.getElementById("hasil");
+
+      if (input === "") {
+        hasil.innerHTML = "Silakan masukkan NISN.";
+        return;
+      }
+
+      const siswa = dataSiswa.find(d => d.nisn === input);
+
+      if (siswa) {
+        if (siswa.status.toUpperCase() === "LULUS") {
+          hasil.innerHTML = `
+            <p>Nama: <strong>${siswa.nama}</strong></p>
+            <p>Tempat, Tanggal Lahir: ${siswa.tempat}, ${siswa.tanggal}</p>
+            <p class="lulus">🎉 SELAMAT! ANDA DINYATAKAN LULUS 🎉</p>
+          `;
+          showConfetti();
+        } else {
+          hasil.innerHTML = `
+            <p>Nama: <strong>${siswa.nama}</strong></p>
+            <p>Tempat, Tanggal Lahir: ${siswa.tempat}, ${siswa.tanggal}</p>
+            <p class="tidaklulus">Mohon Maaf, Anda Belum Lulus.</p>
+          `;
+        }
+      } else {
+        hasil.innerHTML = "NISN tidak ditemukan.";
+      }
+    }
+
+    // Konfeti sederhana
+    function showConfetti() {
+      const duration = 2 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
+
+      function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      const interval = setInterval(function() {
+        if (Date.now() > animationEnd) return clearInterval(interval);
+
+        confetti({
+          particleCount: 50,
+          origin: {
+            x: randomInRange(0.1, 0.9),
+            y: Math.random() - 0.2
+          },
+          ...defaults
+        });
+      }, 250);
+    }
+  </script>
+  <!-- Konfeti library (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</body>
+</html>
